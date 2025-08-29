@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Form Hasil Sounding Tangki</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        /* CSS tetap sama seperti sebelumnya */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 15px;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            touch-action: manipulation;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 21cm;
+            min-height: 29.7cm;
+            padding: 1.2cm;
+            background-color: white;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 8px;
+        }
+
+        .company-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .company-location {
+            font-size: 14px;
+            font-weight: bold;
+            margin: 2px 0;
+            text-transform: uppercase;
+        }
+
+        .report-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 4px 0 0;
+            text-transform: uppercase;
+        }
+
+        .date-time {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin: 8px 0 12px;
+            font-size: 13px;
+        }
+
+        .date-time div {
+            margin-bottom: 8px;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+            font-size: 11px;
+            table-layout: fixed;
+        }
+
+        th, td {
+            border: 1px solid #000;
+            padding: 4px;
+            text-align: center;
+            height: 22px;
+        }
+
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        .photo-section {
+            margin: 12px 0;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .photo-item {
+            margin-bottom: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .camera-container {
+            margin-top: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .photo-preview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .photo-box {
+            border: 1px dashed #999;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .photo-box img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 0.7cm;
+            right: 1cm;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        input[type="text"], input[type="number"], input[type="date"], input[type="time"] {
+            width: 100%;
+            border: none;
+            text-align: center;
+            background: transparent;
+            font-size: 11px;
+            padding: 2px;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            background-color: #f9f9f9;
+        }
+
+        .button-container {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            min-width: 120px;
+            touch-action: manipulation;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #cameraModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            width: 95%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #cameraVideo {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-height: 60vh;
+            object-fit: cover;
+        }
+
+        .camera-controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .camera-switch {
+            padding: 10px;
+            background-color: #2196F3;
+        }
+
+        /* Gaya untuk bagian tanda tangan */
+        .signatures {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 11px;
+        }
+
+        .signatures td {
+            border: none;
+            text-align: center;
+            vertical-align: bottom;
+            padding: 4px;
+            width: 25%;
+        }
+
+        .signatures tr:first-child td {
+            font-weight: bold;
+            padding-bottom: 4px;
+        }
+
+        .signatures div {
+            margin-top: 25px;
+            border-top: 1px solid #000;
+            padding-top: 4px;
+            height: 18px;
+        }
+
+        /* Gaya untuk modal GitHub */
+        #githubModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .github-modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .github-input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .github-btn {
+            padding: 12px;
+            background-color: #24292e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        .github-btn:hover {
+            background-color: #2ea44f;
+        }
+
+        /* Media queries untuk perangkat mobile */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0.8cm;
+            }
+
+            .company-name {
+                font-size: 14px;
+            }
+
+            .company-location, .report-title {
+                font-size: 12px;
+            }
+
+            table {
+                font-size: 10px;
+            }
+
+            th, td {
+                padding: 2px;
+            }
+
+            .date-time div {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+
+            button {
+                padding: 10px;
+                font-size: 14px;
+                min-width: 110px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0.5cm;
+            }
+
+            .photo-preview {
+                grid-template-columns: 1fr;
+            }
+
+            .signatures {
+                font-size: 9px;
+            }
+
+            .signatures td {
+                width: 25%;
+                padding: 2px;
+            }
+        }
+
+        @media print {
+            .button-container, .camera-btn, .camera-switch {
+                display: none !important;
+            }
+
+            body {
+                padding: 0;
+                background-color: white;
+            }
+
+            .container {
+                box-shadow: none;
+                margin: 0;
+                padding: 1.2cm;
+                width: 21cm;
+                height: 29.7cm;
+            }
+        }
+
+        /* Penyesuaian khusus untuk PDF */
+        .pdf-mode .container {
+            box-shadow: none;
+            margin: 0;
+            position: relative;
+            top: 0;
+        }
+
+        .pdf-mode {
+            padding: 0;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="formContainer">
+        <div class="header">
+            <h1 class="company-name">PT. HASNUR CITRA TERPADU</h1>
+            <h2 class="company-location">PKS - SUNGAI PUTING</h2>
+            <h2 class="report-title">HASIL SOUNDING TANGKI</h2>
+        </div>
+
+        <div class="date-time">
+            <div><strong>Hari/Tanggal:</strong> <input type="date" id="tanggal"></div>
+            <div><strong>Jam:</strong> <input type="time" id="jam"></div>
+        </div>
+
+        <table>
+            <tr>
+                <th rowspan="2">NO. TANGKI</th>
+                <th rowspan="2">CM</th>
+                <th rowspan="2">MM</th>
+                <th colspan="3">SUHU</th>
+                <th rowspan="2">RATA-RATA</th>
+            </tr>
+            <tr>
+                <th>ATAS</th>
+                <th>TENGAH</th>
+                <th>BAWAH</th>
+            </tr>
+
+            <!-- Tangki 1 -->
+            <tr>
+                <td>TANGKI 1</td>
+                <td><input type="number" id="cm1" class="cm-input"></td>
+                <td><input type="number" id="mm1" class="mm-input"></td>
+                <td><input type="number" id="suhu1a" class="suhu-atas" oninput="hitungRataRata(1)"></td>
+                <td><input type="number" id="suhu1t" class="suhu-tengah" oninput="hitungRataRata(1)"></td>
+                <td><input type="number" id="suhu1b" class="suhu-bawah" oninput="hitungRataRata(1)"></td>
+                <td><input type="text" id="rataRata1" class="rata-rata" readonly></td>
+            </tr>
+
+            <!-- Tangki 2 -->
+            <tr>
+                <td>TANGKI 2</td>
+                <td><input type="number" id="cm2" class="cm-input"></td>
+                <td><input type="number" id="mm2" class="mm-input"></td>
+                <td><input type="number" id="suhu2a" class="suhu-atas" oninput="hitungRataRata(2)"></td>
+                <td><input type="number" id="suhu2t" class="suhu-tengah" oninput="hitungRataRata(2)"></td>
+                <td><input type="number" id="suhu2b" class="suhu-bawah" oninput="hitungRataRata(2)"></td>
+                <td><input type="text" id="rataRata2" class="rata-rata" readonly></td>
+            </tr>
+        </table>
+
+        <div class="photo-section">
+            <div class="photo-item">
+                Foto Hasil Sounding
+                <div class="camera-container">
+                    <button class="camera-btn" onclick="openCamera('fotoSounding')">Ambil Foto</button>
+                    <div class="photo-preview" id="previewSounding">
+                        <div class="photo-box" id="sounding1"><span>Foto 1</span></div>
+                        <div class="photo-box" id="sounding2"><span>Foto 2</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-item">
+                Foto Tangki CPO
+                <div class="camera-container">
+                    <button class="camera-btn" onclick="openCamera('fotoCPO')">Ambil Foto</button>
+                    <div class="photo-preview" id="previewCPO">
+                        <div class="photo-box" id="cpo1"><span>Foto 1</span></div>
+                        <div class="photo-box" id="cpo2"><span>Foto 2</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-item">
+                Foto Team Pengambil Sounding
+                <div class="camera-container">
+                    <button class="camera-btn" onclick="openCamera('fotoTeam')">Ambil Foto</button>
+                    <div class="photo-preview" id="previewTeam">
+                        <div class="photo-box" id="team1"><span>Foto 1</span></div>
+                        <div class="photo-box" id="team2"><span>Foto 2</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bagian Tanda Tangan - DIPINDAHKAN KE BAWAH FOTO -->
+        <table class="signatures">
+            <tr>
+                <td>TEAM SOUNDING</td>
+                <td>ASISTEN LAB</td>
+                <td>ASKEP</td>
+                <td>MILL MANAGER</td>
+            </tr>
+            <tr>
+                <td><div>(......................)</div></td>
+                <td><div>(......................)</div></td>
+                <td><div>(......................)</div></td>
+                <td><div>(......................)</div></td>
+            </tr>
+        </table>
+
+        <div class="page-number">Halaman 1 dari 1</div>
+    </div>
+
+    <div id="cameraModal">
+        <div class="modal-content">
+            <video id="cameraVideo" autoplay playsinline></video>
+            <canvas id="photoCanvas" style="display:none;"></canvas>
+            <div class="camera-controls">
+                <button id="captureBtn">Ambil Foto</button>
+                <button class="camera-switch" id="switchCamera">Ganti Kamera</button>
+                <button onclick="closeCamera()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal GitHub -->
+    <div id="githubModal">
+        <div class="github-modal-content">
+            <h3>Upload ke GitHub</h3>
+            <p>Masukkan informasi berikut untuk mengupload ke GitHub:</p>
+            <input type="text" id="githubToken" class="github-input" placeholder="GitHub Personal Access Token">
+            <input type="text" id="githubRepo" class="github-input" placeholder="Nama Repositori (format: username/repo)">
+            <input type="text" id="githubBranch" class="github-input" placeholder="Nama Branch (default: main)" value="main">
+            <input type="text" id="githubPath" class="github-input" placeholder="Path file (contoh: reports/tangki-sounding)" value="reports">
+            <button class="github-btn" onclick="uploadToGitHub()">Upload</button>
+            <button onclick="closeGitHubModal()">Batal</button>
+        </div>
+    </div>
+
+    <div class="button-container">
+        <button onclick="exportToPDF()">Ekspor ke PDF</button>
+        <button onclick="window.print()">Cetak</button>
+        <button onclick="openGitHubModal()">Upload ke GitHub</button>
+    </div>
+
+    <script>
+        // Variabel global untuk menyimpan state kamera
+        let currentStream = null;
+        let currentPhotoType = '';
+        let uploadedPhotos = [];
+        let currentFacingMode = 'environment'; // 'environment' untuk kamera belakang, 'user' untuk depan
+
+        // Format tanggal dan jam otomatis
+        document.getElementById('tanggal').valueAsDate = new Date();
+        document.getElementById('jam').value = new Date().toTimeString().substr(0, 5);
+
+        // Fungsi untuk menghitung rata-rata
+        function hitungRataRata(tangki) {
+            const suhuAtas = parseFloat(document.getElementById(`suhu${tangki}a`).value) || 0;
+            const suhuTengah = parseFloat(document.getElementById(`suhu${tangki}t`).value) || 0;
+            const suhuBawah = parseFloat(document.getElementById(`suhu${tangki}b`).value) || 0;
+
+            // Hitung rata-rata (jumlah semua nilai dibagi banyaknya data)
+            const rataRata = (suhuAtas + suhuTengah + suhuBawah) / 3;
+
+            // Tampilkan hasil dengan 2 angka di belakang koma
+            document.getElementById(`rataRata${tangki}`).value = rataRata.toFixed(2);
+        }
+
+        // Fungsi untuk membuka kamera
+        function openCamera(photoType) {
+            currentPhotoType = photoType;
+            const modal = document.getElementById('cameraModal');
+            modal.style.display = 'flex';
+
+            // Mulai dengan kamera belakang
+            currentFacingMode = 'environment';
+            startCamera();
+        }
+
+        // Fungsi untuk memulai kamera
+        function startCamera() {
+            // Hentikan kamera sebelumnya jika ada
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+
+            // Konfigurasi kamera
+            const constraints = {
+                video: { 
+                    facingMode: currentFacingMode,
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }, 
+                audio: false 
+            };
+
+            // Akses kamera
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(function(stream) {
+                    const video = document.getElementById('cameraVideo');
+                    video.srcObject = stream;
+                    currentStream = stream;
+
+                    // Atur orientasi video berdasarkan perangkat
+                    setupVideoOrientation();
+                })
+                .catch(function(err) {
+                    console.error("Error mengakses kamera: ", err);
+
+                    // Fallback ke constraints dasar jika facingMode tidak didukung
+                    if (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError') {
+                        const fallbackConstraints = { video: true, audio: false };
+                        navigator.mediaDevices.getUserMedia(fallbackConstraints)
+                            .then(function(stream) {
+                                const video = document.getElementById('cameraVideo');
+                                video.srcObject = stream;
+                                currentStream = stream;
+                            })
+                            .catch(function(fallbackErr) {
+                                console.error("Error mengakses kamera (fallback): ", fallbackErr);
+                                alert("Tidak dapat mengakses kamera. Pastikan Anda memberikan izin.");
+                            });
+                    } else {
+                        alert("Tidak dapat mengakses kamera. Pastikan Anda memberikan izin.");
+                    }
+                });
+        }
+
+        // Fungsi untuk mengatur orientasi video
+        function setupVideoOrientation() {
+            const video = document.getElementById('cameraVideo');
+
+            // Cek apakah perangkat mobile
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                // Untuk perangkat mobile, atur berdasarkan orientasi layar
+                const orientation = window.screen.orientation || window.orientation;
+
+                if (orientation) {
+                    if (orientation.type.includes('landscape')) {
+                        video.style.transform = 'none';
+                    } else {
+                        // Untuk portrait, sesuaikan jika perlu
+                        if (currentFacingMode === 'user') {
+                            video.style.transform = 'scaleX(-1)'; // Mirror untuk kamera depan
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fungsi untuk mengganti kamera (depan/belakang)
+        document.getElementById('switchCamera').addEventListener('click', function() {
+            currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+            startCamera();
+        });
+
+        // Fungsi untuk menutup kamera
+        function closeCamera() {
+            const modal = document.getElementById('cameraModal');
+            modal.style.display = 'none';
+
+            // Menghentikan stream kamera
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+        }
+
+        // Fungsi untuk mengambil foto
+        document.getElementById('captureBtn').addEventListener('click', function() {
+            const video = document.getElementById('cameraVideo');
+            const canvas = document.getElementById('photoCanvas');
+            const context = canvas.getContext('2d');
+
+            // Set ukuran canvas sama dengan video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Gambar frame video ke canvas
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Konversi canvas ke data URL (format gambar)
+            const imageData = canvas.toDataURL('image/png');
+
+            // Simpan gambar ke preview yang sesuai
+            savePhoto(imageData);
+        });
+
+        // Fungsi untuk menyimpan foto ke preview
+        function savePhoto(imageData) {
+            // Cari slot kosong untuk foto
+            let photoBox = null;
+
+            if (currentPhotoType === 'fotoSounding') {
+                if (!document.getElementById('sounding1').querySelector('img')) {
+                    photoBox = document.getElementById('sounding1');
+                } else if (!document.getElementById('sounding2').querySelector('img')) {
+                    photoBox = document.getElementById('sounding2');
+                }
+            } else if (currentPhotoType === 'fotoCPO') {
+                if (!document.getElementById('cpo1').querySelector('img')) {
+                    photoBox = document.getElementById('cpo1');
+                } else if (!document.getElementById('cpo2').querySelector('img')) {
+                    photoBox = document.getElementById('cpo2');
+                }
+            } else if (currentPhotoType === 'fotoTeam') {
+                if (!document.getElementById('team1').querySelector('img')) {
+                    photoBox = document.getElementById('team1');
+                } else if (!document.getElementById('team2').querySelector('img')) {
+                    photoBox = document.getElementById('team2');
+                }
+            }
+
+            // Jika ada slot kosong, simpan foto
+            if (photoBox) {
+                photoBox.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = imageData;
+                photoBox.appendChild(img);
+
+                // Simpan foto untuk PDF
+                const photoData = {
+                    id: Date.now(),
+                    dataUrl: imageData,
+                    type: currentPhotoType
+                };
+                uploadedPhotos.push(photoData);
+
+                // Tutup kamera setelah mengambil foto
+                closeCamera();
+            } else {
+                alert('Slot foto untuk kategori ini sudah penuh. Maksimal 2 foto per kategori.');
+            }
+        }
+
+        // Fungsi untuk mengekspor ke PDF menggunakan jsPDF
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Ukuran halaman A4 dalam mm
+            const pageWidth = 210;
+            const pageHeight = 297;
+
+            // Margin
+            const margin = 15;
+
+            // Posisi Y saat ini
+            let currentY = margin;
+
+            // Header PDF
+            doc.setFontSize(16);
+            doc.setTextColor(40, 40, 40);
+            doc.text("PT. HASNUR CITRA TERPADU", pageWidth / 2, currentY, { align: 'center' });
+            currentY += 7;
+
+            doc.setFontSize(14);
+            doc.text("PKS - SUNGAI PUTING", pageWidth / 2, currentY, { align: 'center' });
+            currentY += 7;
+
+            doc.setFontSize(18);
+            doc.text("HASIL SOUNDING TANGKI", pageWidth / 2, currentY, { align: 'center' });
+            currentY += 12;
+
+            doc.setFontSize(12);
+            doc.text(`Tanggal: ${document.getElementById('tanggal').value}`, margin, currentY);
+            doc.text(`Jam: ${document.getElementById('jam').value}`, pageWidth - margin, currentY, { align: 'right' });
+            currentY += 10;
+
+            // Data sounding
+            const headers = [["NO. TANGKI", "CM", "MM", "SUHU ATAS", "SUHU TENGAH", "SUHU BAWAH", "RATA-RATA"]];
+            const data = [
+                [
+                    "TANGKI 1",
+                    document.getElementById('cm1').value,
+                    document.getElementById('mm1').value,
+                    document.getElementById('suhu1a').value,
+                    document.getElementById('suhu1t').value,
+                    document.getElementById('suhu1b').value,
+                    document.getElementById('rataRata1').value
+                ],
+                [
+                    "TANGKI 2",
+                    document.getElementById('cm2').value,
+                    document.getElementById('mm2').value,
+                    document.getElementById('suhu2a').value,
+                    document.getElementById('suhu2t').value,
+                    document.getElementById('suhu2b').value,
+                    document.getElementById('rataRata2').value
+                ]
+            ];
+
+            // Tabel data
+            doc.autoTable({
+                head: headers,
+                body: data,
+                startY: currentY,
+                margin: { left: margin, right: margin },
+                styles: { fontSize: 9, cellPadding: 2 },
+                headStyles: { fillColor: [44, 62, 80] },
+                theme: 'grid'
+            });
+
+            currentY = doc.lastAutoTable.finalY + 10;
+
+            // Filter foto berdasarkan jenis
+            const soundingPhotos = uploadedPhotos.filter(photo => photo.type === 'fotoSounding');
+            const cpoPhotos = uploadedPhotos.filter(photo => photo.type === 'fotoCPO');
+            const teamPhotos = uploadedPhotos.filter(photo => photo.type === 'fotoTeam');
+
+            // Ukuran foto untuk PDF (lebih kecil)
+            const photoWidth = 40;
+            const photoHeight = 30;
+            const photoSpacing = 10;
+
+            // Tambahkan foto hasil sounding
+            if (soundingPhotos.length > 0) {
+                // Cek jika cukup ruang di halaman
+                if (currentY + photoHeight + 20 > pageHeight - margin) {
+                    // Tidak cukup ruang, skip foto atau buat keputusan lain
+                } else {
+                    doc.setFontSize(10);
+                    doc.text("Foto Hasil Sounding:", margin, currentY);
+                    currentY += 5;
+
+                    soundingPhotos.slice(0, 2).forEach((photo, index) => {
+                        try {
+                            const xPos = margin + (index * (photoWidth + photoSpacing));
+                            doc.addImage(photo.dataUrl, 'JPEG', xPos, currentY, photoWidth, photoHeight);
+                        } catch (error) {
+                            console.error("Gagal menambahkan foto:", error);
+                        }
+                    });
+                    currentY += photoHeight + 10;
+                }
+            }
+
+            // Tambahkan foto tangki CPO
+            if (cpoPhotos.length > 0) {
+                // Cek jika cukup ruang di halaman
+                if (currentY + photoHeight + 20 > pageHeight - margin) {
+                    // Tidak cukup ruang, skip foto
+                } else {
+                    doc.setFontSize(10);
+                    doc.text("Foto Tangki CPO:", margin, currentY);
+                    currentY += 5;
+
+                    cpoPhotos.slice(0, 2).forEach((photo, index) => {
+                        try {
+                            const xPos = margin + (index * (photoWidth + photoSpacing));
+                            doc.addImage(photo.dataUrl, 'JPEG', xPos, currentY, photoWidth, photoHeight);
+                        } catch (error) {
+                            console.error("Gagal menambahkan foto:", error);
+                        }
+                    });
+                    currentY += photoHeight + 10;
+                }
+            }
+
+            // Tambahkan foto team
+            if (teamPhotos.length > 0) {
+                // Cek jika cukup ruang di halaman
+                if (currentY + photoHeight + 20 > pageHeight - margin) {
+                    // Tidak cukup ruang, skip foto
+                } else {
+                    doc.setFontSize(10);
+                    doc.text("Foto Team Pengambil Sounding:", margin, currentY);
+                    currentY += 5;
+
+                    teamPhotos.slice(0, 2).forEach((photo, index) => {
+                        try {
+                            const xPos = margin + (index * (photoWidth + photoSpacing));
+                            doc.addImage(photo.dataUrl, 'JPEG', xPos, currentY, photoWidth, photoHeight);
+                        } catch (error) {
+                            console.error("Gagal menambahkan foto:", error);
+                        }
+                    });
+                    currentY += photoHeight + 15;
+                }
+            }
+
+            // Tanda tangan - DIPINDAHKAN KE BAWAH FOTO
+            // Jika tidak cukup ruang, naikkan sedikit posisinya
+            if (currentY > pageHeight - 30) {
+                currentY = pageHeight - 30;
+            }
+
+            doc.setFontSize(10);
+            const signatureY = currentY;
+            doc.text("TEAM SOUNDING", margin, signatureY);
+            doc.text("(........................)", margin, signatureY + 10);
+
+            doc.text("ASISTEN LAB", margin + 50, signatureY);
+            doc.text("(........................)", margin + 50, signatureY + 10);
+
+            doc.text("ASKEP", margin + 100, signatureY);
+            doc.text("(........................)", margin + 100, signatureY + 10);
+
+            doc.text("MILL MANAGER", margin + 150, signatureY);
+            doc.text("(........................)", margin + 150, signatureY + 10);
+
+            // Simpan PDF
+            const fileName = `Hasil_Sounding_Tangki_${document.getElementById('tanggal').value || 'Report'}.pdf`;
+            doc.save(fileName);
+        }
+
+        // Fungsi untuk membuka modal GitHub
+        function openGitHubModal() {
+            document.getElementById('githubModal').style.display = 'flex';
+        }
+
+        // Fungsi untuk menutup modal GitHub
+        function closeGitHubModal() {
+            document.getElementById('githubModal').style.display = 'none';
+        }
+
+        // Fungsi untuk mengupload ke GitHub
+        async function uploadToGitHub() {
+            const token = document.getElementById('githubToken').value;
+            const repo = document.getElementById('githubRepo').value;
+            const branch = document.getElementById('githubBranch').value || 'main';
+            const path = document.getElementById('githubPath').value || 'reports';
+
+            if (!token || !repo) {
+                alert('Token dan Nama Repositori harus diisi!');
+                return;
+            }
+
+            try {
+                // Membuat nama file dengan timestamp
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const fileName = `sounding-tangki-${timestamp}.json`;
+                const filePath = `${path}/${fileName}`;
+
+                // Mengumpulkan data dari form
+                const formData = {
+                    tanggal: document.getElementById('tanggal').value,
+                    jam: document.getElementById('jam').value,
+                    tangki1: {
+                        cm: document.getElementById('cm1').value,
+                        mm: document.getElementById('mm1').value,
+                        suhuAtas: document.getElementById('suhu1a').value,
+                        suhuTengah: document.getElementById('suhu1t').value,
+                        suhuBawah: document.getElementById('suhu1b').value,
+                        rataRata: document.getElementById('rataRata1').value
+                    },
+                    tangki2: {
+                        cm: document.getElementById('cm2').value,
+                        mm: document.getElementById('mm2').value,
+                        suhuAtas: document.getElementById('suhu2a').value,
+                        suhuTengah: document.getElementById('suhu2t').value,
+                        suhuBawah: document.getElementById('suhu2b').value,
+                        rataRata: document.getElementById('rataRata2').value
+                    },
+                    fotoSounding: uploadedPhotos.filter(photo => photo.type === 'fotoSounding').map(photo => photo.dataUrl),
+                    fotoCPO: uploadedPhotos.filter(photo => photo.type === 'fotoCPO').map(photo => photo.dataUrl),
+                    fotoTeam: uploadedPhotos.filter(photo => photo.type === 'fotoTeam').map(photo => photo.dataUrl),
+                    timestamp: new Date().toISOString()
+                };
+
+                // Konversi data ke base64
+                const content = btoa(JSON.stringify(formData, null, 2));
+
+                // Membuat payload untuk GitHub API
+                const payload = {
+                    message: `Menambah hasil sounding tangki - ${formData.tanggal}`,
+                    content: content,
+                    branch: branch
+                };
+
+                // Mengupload ke GitHub
+                const response = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('Berhasil mengupload ke GitHub!');
+                    closeGitHubModal();
+                } else {
+                    alert(`Gagal mengupload: ${result.message}`);
+                }
+            } catch (error) {
+                console.error('Error uploading to GitHub:', error);
+                alert('Terjadi kesalahan saat mengupload ke GitHub');
+            }
+        }
+
+        // Deteksi perubahan orientasi layar
+        window.addEventListener('orientationchange', setupVideoOrientation);
+        window.addEventListener('resize', setupVideoOrientation);
+    </script>
+</body>
+</html>
